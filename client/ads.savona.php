@@ -14,7 +14,7 @@ $path = get_include_path();
 $newPath = sprintf("%s;%s",$path,$libDir);
 set_include_path($newPath);
 require_once $confDir."ads.savona.conf.php";
-require_once 'WSSoapClient.php';
+require_once $libDir.'WSSoapClient.php';
 
 
 $dbh = new PDO(DSN);
