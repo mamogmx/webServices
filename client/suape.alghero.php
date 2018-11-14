@@ -34,7 +34,7 @@ function debug($file,$data,$mode='a+'){
         ob_end_clean();
         fwrite($f,$result."\n-------------------------\n");
         fclose($f);
-    }
+ }
 
 $prms = Array(
     "attivita-id" => NULL,
