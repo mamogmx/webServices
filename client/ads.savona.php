@@ -6,6 +6,10 @@
  * and open the template in the editor.
  */
 
+$baseDir = dirname(dirname(__FILE__)).DIRECTORY_SEPARATOR;
+$libDir = $baseDir."lib".DIRECTORY_SEPARATOR;
+$confDir = $baseDir."config".DIRECTORY_SEPARATOR;
+
 $path = get_include_path();
 $newPath = sprintf("%s;%s",$path,$libDir);
 set_include_path($newPath);
