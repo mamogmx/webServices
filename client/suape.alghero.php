@@ -100,7 +100,7 @@ $baseDir = dirname(dirname(__FILE__)).DIRECTORY_SEPARATOR;
 $libDir = $baseDir."lib".DIRECTORY_SEPARATOR;
 $confDir = $baseDir."config".DIRECTORY_SEPARATOR;
 
-
+print date("d/m/Y H:i:s")."\n";
 
 $path = get_include_path();
 $newPath = sprintf("%s;%s",$path,$libDir);
@@ -144,16 +144,18 @@ for($i=0;$i<count($dati);$i++){
 }
 die();
  */ 
- 
+ /*
 $sql = "SELECT DISTINCT pratica FROM suape.procedimenti ORDER BY 1;";
 $stmt = $dbh->prepare($sql);
 if(!$stmt->execute()){
-        $err = $stmt->errorInfo();
-        $mess = sprintf("%s) %s\n",$i,$err);
-    }
-    else{
-        $pratiche = $stmt->fetchAll();
-    }
+    $err = $stmt->errorInfo();
+    $mess = sprintf("%s) %s\n",$i,$err);
+}
+else{
+    $pratiche = $stmt->fetchAll();
+}
+*/
+$pratiche = Array(Array("pratica"=>282008));
 for($i=0;$i<count($pratiche);$i++){
     $pr = $pratiche[$i]["pratica"];
     
@@ -166,9 +168,15 @@ for($i=0;$i<count($pratiche);$i++){
         print $e->getMessage() . "\n"; exit();
     }
     $rr = objectToArray($res);
-    $data = $rr["pratica-view-ho"];
-    $pratica = $data["pratica-id"];
-    $data = json_encode($data);
+    print_r($rr["pratica-comunicazione-ho-list"]["pratica-comunicazione-v-ho"]);
+    
+    print date("d/m/Y H:i:s")."\n";
+
+    die();
+/********************   Inserimento dei dati della pratica   ******************/
+    $procedimento = $rr["pratica-view-ho"];
+    $pratica = $procedimento["pratica-id"];
+    $data = json_encode($procedimento);
     $sql = "INSERT INTO suape.pratica(pratica,data) VALUES(?,?);";
     $stmt = $dbh->prepare($sql);
     if(!$stmt->execute(Array($pratica,$data))){
@@ -176,11 +184,95 @@ for($i=0;$i<count($pratiche);$i++){
         $mess = sprintf("%s) %s\n",$i,$err);
     }
     else{
-        $mess = sprintf("%s) Record OK\n",$i);
+        $mess = sprintf("%s) Record Pratica OK\n",$i);
     }
     print $mess;
-}
+/*******************   Inserimento dei dati dell'ubicazione   *****************/
+    $ubicazione = $rr["pratica-ubicazione-view-ho"];
+    $sql = "INSERT INTO suape.ubicazione(pratica,data) VALUES(?,?);";
+    $data = json_encode($ubicazione);
+    $stmt = $dbh->prepare($sql);
+    if(!$stmt->execute(Array($pratica,$data))){
+        $err = $stmt->errorInfo();
+        $mess = sprintf("%s) %s\n",$i,$err);
+    }
+    else{
+        $mess = sprintf("%s) Record Ubicazione OK\n",$i);
+    }
+    print $mess;    
+    
+/**********************   Inserimento dei dati catastali   ********************/    
+    $catasto = $rr["pratica-ubicazione-catastale-ho-list"]["pratica-ubicazione-catastale-ho-v"];
+    
+    $sql = "INSERT INTO suape.catasto(pratica,data) VALUES(?,?);";
+    for($i=0;$i<count($catasto);$i++){
+        $data = json_encode($catasto[$i]);
+        $stmt = $dbh->prepare($sql);
+        if(!$stmt->execute(Array($pratica,$data))){
+            $err = $stmt->errorInfo();
+            $mess = sprintf("%s) %s\n",$i,$err);
+        }
+        else{
+            $mess = sprintf("%s) Record Catasto OK\n",$i);
+        }
+     
+       print $mess;
+    }
+    die();
+/********************     Inserimento delle comunicazioni    ******************/
+    $comunicazioni = $rr["pratica-comunicazione-ho-list"]["pratica-comunicazione-v-ho"];
+    $sql = "INSERT INTO suape.comunicazioni(pratica,data) VALUES(?,?);";
+    for($i=0;$i<count($comunicazioni);$i++){
+        $data = json_encode($comunicazioni[$i]);
+        $stmt = $dbh->prepare($sql);
+        if(!$stmt->execute(Array($pratica,$data))){
+            $err = $stmt->errorInfo();
+            $mess = sprintf("%s) %s\n",$i,$err);
+        }
+        else{
+            $mess = sprintf("%s) Record OK\n",$i);
+        }
+     
+       print $mess;
+    }
+    
+/********************     Inserimento degli allegati         ******************/
+    $allegati = $rr["pratica-to-doc-rich-ho-list"]["pratica-to-docrich-ho-v"];
+    $sql = "INSERT INTO suape.documenti(pratica,data) VALUES(?,?);";
 
+    for($i=0;$i<count($allegati);$i++){
+        $allegati[$i]["tabella"] = "docrich";
+        $data = json_encode($allegati[$i]);
+        $stmt = $dbh->prepare($sql);
+        if(!$stmt->execute(Array($pratica,$data))){
+            $err = $stmt->errorInfo();
+            $mess = sprintf("%s) %s\n",$i,$err);
+        }
+        else{
+            $mess = sprintf("%s) Record Allegati OK\n",$i);
+        }
+     
+       print $mess;
+    }
+    $allegati = $rr["pratica-to-modulistica-ho-list"]["pratica-to-modulistica-ho-v"];
+    $sql = "INSERT INTO suape.documenti(pratica,data) VALUES(?,?);";
+
+    for($i=0;$i<count($allegati);$i++){
+        $allegati[$i]["tabella"] = "modulistica";
+        $data = json_encode($allegati[$i]);
+        $stmt = $dbh->prepare($sql);
+        if(!$stmt->execute(Array($pratica,$data))){
+            $err = $stmt->errorInfo();
+            $mess = sprintf("%s) %s\n",$i,$err);
+        }
+        else{
+            $mess = sprintf("%s) Record Allegati 2 OK\n",$i);
+        }
+     
+       print $mess;
+    }
+    
+}    
 print "Done\n";die();
 //echo "REQUEST:\n" . $client->__getLastRequest() . "\n";die();
 
@@ -189,32 +281,5 @@ debug('RESPONSE.debug',$rr,'w');
 
 
 $allegati = $data["pratica-comunicazione-ho-list"][""];
-
-
-
-
-
-//var_dump($rr);
-die();
-$i=1;
-$sql = "INSERT INTO suape.procedimenti(data) VALUES(?);";
-$stmt = $dbh->prepare($sql);
-foreach($rr as $r){
-    
-    $data = json_encode($r);
-    if(!$stmt->execute(Array($data))){
-        $err = $stmt->errorInfo();
-        $mess = sprintf("%s) %s\n",$i,$err[1]);
-    }
-    else{
-        $mess = sprintf("%s) Record OK\n",$i);
-    }
-    print $mess;
-    $i+=1;
-}
-die();
-
-var_dump($res);
-die();
 
 ?>
