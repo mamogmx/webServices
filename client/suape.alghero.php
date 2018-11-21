@@ -95,10 +95,14 @@ function objectToArray($d)
     }
 }
 
+$key = "pratica-id";
+
 
 $baseDir = dirname(dirname(__FILE__)).DIRECTORY_SEPARATOR;
 $libDir = $baseDir."lib".DIRECTORY_SEPARATOR;
 $confDir = $baseDir."config".DIRECTORY_SEPARATOR;
+
+
 
 print date("d/m/Y H:i:s")."\n";
 
@@ -155,25 +159,31 @@ else{
     $pratiche = $stmt->fetchAll();
 }
 */
-$pratiche = Array(Array("pratica"=>282008));
-for($i=0;$i<count($pratiche);$i++){
-    $pr = $pratiche[$i]["pratica"];
-    
+$pratiche = Array(Array("pratica"=>285280),Array("pratica"=>285424));
+for($j=0;$j<count($pratiche);$j++){
+    $pr = $pratiche[$j]["pratica"];
+    $anno = 2017;
+    $docDir = $baseDir."documenti".DIRECTORY_SEPARATOR."pe".DIRECTORY_SEPARATOR.$anno.DIRECTORY_SEPARATOR.$pr.DIRECTORY_SEPARATOR."allegati".DIRECTORY_SEPARATOR;
+    print "$j) Pratica $pr\n";
     try {
-        $mess = sprintf("%s) Chiamata al WS per la pratica %s delle %s\n",$i,$pr,date("d/m/Y H:i:s"));
+        $mess = sprintf("\t%s) Chiamata al WS per la pratica %s delle %s\n",$j,$pr,date("d/m/Y H:i:s"));
+        print $mess;
         $res = $client->getPraticaDettaglioEtWs(Array("pratica-id"=>$pr));
+        $mess = sprintf("\t%s) Uscita dal WS per la pratica %s delle %s\n",$j,$pr,date("d/m/Y H:i:s"));
         print $mess;
     } 
     catch (Exception $e) {
-        print $e->getMessage() . "\n"; exit();
+        print $e->getMessage() . "\n";        
+        continue;
     }
     $rr = objectToArray($res);
-    /*print count($rr["pratica-to-doc-rich-ho-list"]["pratica-to-docrich-ho-v"])."\n";
-    print_r($rr["pratica-to-doc-rich-ho-list"]["pratica-to-docrich-ho-v"]);
+/*    print count($rr["pratica-to-modulistica-ho-list"]["pratica-to-modulistica-ho-v"])."\n";
+    print_r($rr["pratica-to-modulistica-ho-list"]["pratica-to-modulistica-ho-v"]);
     die();*/
-    print date("d/m/Y H:i:s")."\n";
-
- 
+    
+    $sql = "SELECT FROM suape.";
+    $anno = 2017;
+    $docDir = $baseDir."documenti".DIRECTORY_SEPARATOR."pe".DIRECTORY_SEPARATOR.$anno.DIRECTORY_SEPARATOR.$pr.DIRECTORY_SEPARATOR."allegati".DIRECTORY_SEPARATOR;
 /********************   Inserimento dei dati della pratica   ******************/
     $procedimento = $rr["pratica-view-ho"];
     $pratica = $procedimento["pratica-id"];
@@ -182,10 +192,10 @@ for($i=0;$i<count($pratiche);$i++){
     $stmt = $dbh->prepare($sql);
     if(!$stmt->execute(Array($pratica,$data))){
         $err = $stmt->errorInfo();
-        $mess = sprintf("%s) %s\n",$i,$err);
+        $mess = sprintf("\t%s)Errore inserimento procedimento $s: %s\n",$i,$pr,$err);
     }
     else{
-        $mess = sprintf("%s) Record Pratica OK\n",$i);
+        $mess = sprintf("\t%s) Record Procedimento Pratica $pr OK\n",$j,$pr);
     }
     print $mess;
 /*******************   Inserimento dei dati dell'ubicazione   *****************/
@@ -195,16 +205,19 @@ for($i=0;$i<count($pratiche);$i++){
     $stmt = $dbh->prepare($sql);
     if(!$stmt->execute(Array($pratica,$data))){
         $err = $stmt->errorInfo();
-        $mess = sprintf("%s) %s\n",$i,$err);
+        $mess = sprintf("\t%s)Errore inserimento ubicazione pratica %s : %s\n",$j,$pr,$err);
     }
     else{
-        $mess = sprintf("%s) Record Ubicazione OK\n",$i);
+        $mess = sprintf("\t%s)Record Ubicazione Pratica %s OK\n",$j,$pr);
     }
     print $mess;    
     
 /**********************   Inserimento dei dati catastali   ********************/    
     $catasto = $rr["pratica-ubicazione-catastale-ho-list"]["pratica-ubicazione-catastale-ho-v"];
-    if (in_array("pratica-id",array_keys($catasto))){
+    $Keys = array_keys($catasto);
+    if (array_key_exists($key,$catasto)){
+        $mex = sprintf("\t\tFound %s in %s\n",$key,implode(',',$Keys));
+        //print $mex;
         $catasto = Array($catasto);
     }
     $sql = "INSERT INTO suape.catasto(pratica,data) VALUES(?,?);";
@@ -213,10 +226,10 @@ for($i=0;$i<count($pratiche);$i++){
         $stmt = $dbh->prepare($sql);
         if(!$stmt->execute(Array($pratica,$data))){
             $err = $stmt->errorInfo();
-            $mess = sprintf("%s) %s\n",$i,$err);
+            $mess = sprintf("\t%s)Errore inserimento catasto pratica %s : %s\n",$i,$pr,$err);
         }
         else{
-            $mess = sprintf("%s) Record Catasto OK\n",$i);
+            $mess = sprintf("\t%s)Record Catasto Pratica %s OK\n",$i,$pr);
         }
      
        print $mess;
@@ -224,16 +237,22 @@ for($i=0;$i<count($pratiche);$i++){
 
 /********************     Inserimento delle comunicazioni    ******************/
     $comunicazioni = $rr["pratica-comunicazione-ho-list"]["pratica-comunicazione-v-ho"];
+    $Keys = array_keys($comunicazioni);
     $sql = "INSERT INTO suape.comunicazioni(pratica,data) VALUES(?,?);";
+    if (array_key_exists($key,$comunicazioni)){
+        $mex = sprintf("Found %s in %s\n",$key,implode(',',$Keys));
+        print $mex;
+        $comunicazioni = Array($comunicazioni);
+    }
     for($i=0;$i<count($comunicazioni);$i++){
         $data = json_encode($comunicazioni[$i]);
         $stmt = $dbh->prepare($sql);
         if(!$stmt->execute(Array($pratica,$data))){
             $err = $stmt->errorInfo();
-            $mess = sprintf("%s) %s\n",$i,$err);
+            $mess = sprintf("\t%s)Errore inserimento comunicazioni pratica %s : %s\n",$i,$pr,$err);
         }
         else{
-            $mess = sprintf("%s) Record Comunicazioni OK\n",$i);
+            $mess = sprintf("\t%s)Record Comunicazioni Pratica %s OK\n",$i,$pr);
         }
      
        print $mess;
@@ -241,49 +260,89 @@ for($i=0;$i<count($pratiche);$i++){
 
 /********************     Inserimento degli allegati         ******************/
     $allegati = $rr["pratica-to-doc-rich-ho-list"]["pratica-to-docrich-ho-v"];
+    $Keys = array_keys($allegati);
     $sql = "INSERT INTO suape.documenti(pratica,data) VALUES(?,?);";
-
+    if (array_key_exists($key,$allegati)){
+        $mex = sprintf("Found %s in %s\n",$key,implode(',',$Keys));
+        //print $mex;
+        $allegati = Array($allegati);
+    }
     for($i=0;$i<count($allegati);$i++){
         $allegati[$i]["tabella"] = "docrich";
         $data = json_encode($allegati[$i]);
         $stmt = $dbh->prepare($sql);
         if(!$stmt->execute(Array($pratica,$data))){
             $err = $stmt->errorInfo();
-            $mess = sprintf("%s) %s\n",$i,$err);
+            $mess = sprintf("\t%s)Errore inserimento record allegati pratica %s : %s\n",$i,$pr,$err);
+            print $mess;
         }
         else{
-            $mess = sprintf("%s) Record Allegati OK\n",$i);
+            $mess = sprintf("\t%s)Record Allegati Pratica %s OK\n",$i,$pr);
+            $docId = $allegati[$i]["file-doc-id"];
+            $filename = $allegati[$i]["filename"];
+            print $mess;
+            $mess = sprintf("\t\t-)Chiamata al WS per il File %s della pratica %s alle %s\n",$filename,$pr,date("d/m/Y H:i:s"));
+            print $mess;
+            try {
+                $res = $client->getPraticaFileEtWs(Array("pratica-id"=>$pr,"file-doc-id"=>$docId));
+                $mess = sprintf("\t\t-)Uscita dal WS alle %s\n",date("d/m/Y H:i:s"));
+                print $mess;
+                $result = objectToArray($res);
+                $text = $result["bytes"];
+                $f = fopen($docDir.$filename,'w');
+                fwrite($f,$text);
+                fclose($f);
+            } 
+            catch (Exception $e) {
+                $mess = sprintf("\t\t-)Errore nella chiamata al WS getPraticaFileEtWs alle %s: %s\n",date("d/m/Y H:i:s"),$e->getMessage());
+                print $mess;
+            }   
         }
-     
-       print $mess;
     }
-    die();
-    $allegati = $rr["pratica-to-modulistica-ho-list"]["pratica-to-modulistica-ho-v"];
-    $sql = "INSERT INTO suape.documenti(pratica,data) VALUES(?,?);";
 
-    for($i=0;$i<count($allegati);$i++){
-        $allegati[$i]["tabella"] = "modulistica";
-        $data = json_encode($allegati[$i]);
+    $modulistica = $rr["pratica-to-modulistica-ho-list"]["pratica-to-modulistica-ho-v"];
+    $Keys = array_keys($modulistica);
+    $sql = "INSERT INTO suape.documenti(pratica,data) VALUES(?,?);";
+    if (array_key_exists($key,$modulistica)){
+        $mex = sprintf("Found %s in %s\n",$key,implode(',',$Keys));
+        print $mex;
+        $modulistica = Array($modulistica);
+    }
+    for($i=0;$i<count($modulistica);$i++){
+        $modulistica[$i]["tabella"] = "modulistica";
+        $data = json_encode($modulistica[$i]);
         $stmt = $dbh->prepare($sql);
         if(!$stmt->execute(Array($pratica,$data))){
             $err = $stmt->errorInfo();
-            $mess = sprintf("%s) %s\n",$i,$err);
+            $mess = sprintf("\t%s)Errore inserimento allegati modulistica pratica %s: %s\n",$i,$pr,$err);
+            print $mess;
         }
         else{
-            $mess = sprintf("%s) Record Allegati 2 OK\n",$i);
+            $mess = sprintf("\t%s)Record Allegati Modulistica pratica %s OK\n",$i,$pr);
+            $docId = $modulistica[$i]["file-doc-id"];
+            $filename = $modulistica[$i]["filename"];
+            print $mess;
+            $mess = sprintf("\t\t-)Chiamata al WS per il File %s della pratica %s alle %s\n",$filename,$pr,date("d/m/Y H:i:s"));
+            print $mess;
+            try {
+                $res = $client->getPraticaFileEtWs(Array("pratica-id"=>$pr,"file-doc-id"=>$docId));
+                $mess = sprintf("\t\t-)Uscita dal WS alle %s\n",date("d/m/Y H:i:s"));
+                print $mess;
+                $result = objectToArray($res);
+                $text = $result["bytes"];
+                $f = fopen($docDir.$filename,'w');
+                fwrite($f,$text);
+                fclose($f);
+            } 
+            catch (Exception $e) {
+                $mess = sprintf("\t\t-)Errore nella chiamata al WS getPraticaFileEtWs alle %s: %s\n",date("d/m/Y H:i:s"),$e->getMessage());
+                print $mess;
+            }  
         }
-     
-       print $mess;
-    }
-    
+    }    
 }    
-print "Done\n";die();
-//echo "REQUEST:\n" . $client->__getLastRequest() . "\n";die();
-
-debug('REQUEST.debug',$client->__getLastRequest(),'w');
-debug('RESPONSE.debug',$rr,'w');
-
-
-$allegati = $data["pratica-comunicazione-ho-list"][""];
+print "Done\n";
+print date("d/m/Y H:i:s")."\n";
+die();
 
 ?>
