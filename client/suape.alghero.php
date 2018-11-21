@@ -168,11 +168,12 @@ for($i=0;$i<count($pratiche);$i++){
         print $e->getMessage() . "\n"; exit();
     }
     $rr = objectToArray($res);
-    print_r($rr["pratica-comunicazione-ho-list"]["pratica-comunicazione-v-ho"]);
-    
+    /*print count($rr["pratica-to-doc-rich-ho-list"]["pratica-to-docrich-ho-v"])."\n";
+    print_r($rr["pratica-to-doc-rich-ho-list"]["pratica-to-docrich-ho-v"]);
+    die();*/
     print date("d/m/Y H:i:s")."\n";
 
-    die();
+ 
 /********************   Inserimento dei dati della pratica   ******************/
     $procedimento = $rr["pratica-view-ho"];
     $pratica = $procedimento["pratica-id"];
@@ -203,7 +204,9 @@ for($i=0;$i<count($pratiche);$i++){
     
 /**********************   Inserimento dei dati catastali   ********************/    
     $catasto = $rr["pratica-ubicazione-catastale-ho-list"]["pratica-ubicazione-catastale-ho-v"];
-    
+    if (in_array("pratica-id",array_keys($catasto))){
+        $catasto = Array($catasto);
+    }
     $sql = "INSERT INTO suape.catasto(pratica,data) VALUES(?,?);";
     for($i=0;$i<count($catasto);$i++){
         $data = json_encode($catasto[$i]);
@@ -218,7 +221,7 @@ for($i=0;$i<count($pratiche);$i++){
      
        print $mess;
     }
-    die();
+
 /********************     Inserimento delle comunicazioni    ******************/
     $comunicazioni = $rr["pratica-comunicazione-ho-list"]["pratica-comunicazione-v-ho"];
     $sql = "INSERT INTO suape.comunicazioni(pratica,data) VALUES(?,?);";
@@ -230,12 +233,12 @@ for($i=0;$i<count($pratiche);$i++){
             $mess = sprintf("%s) %s\n",$i,$err);
         }
         else{
-            $mess = sprintf("%s) Record OK\n",$i);
+            $mess = sprintf("%s) Record Comunicazioni OK\n",$i);
         }
      
        print $mess;
     }
-    
+
 /********************     Inserimento degli allegati         ******************/
     $allegati = $rr["pratica-to-doc-rich-ho-list"]["pratica-to-docrich-ho-v"];
     $sql = "INSERT INTO suape.documenti(pratica,data) VALUES(?,?);";
@@ -254,6 +257,7 @@ for($i=0;$i<count($pratiche);$i++){
      
        print $mess;
     }
+    die();
     $allegati = $rr["pratica-to-modulistica-ho-list"]["pratica-to-modulistica-ho-v"];
     $sql = "INSERT INTO suape.documenti(pratica,data) VALUES(?,?);";
 
