@@ -1,4 +1,4 @@
 *.xml
 nbproject
 /client/*.debug
-/debug/*.debug
+/debug/*

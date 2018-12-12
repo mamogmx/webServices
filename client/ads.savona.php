@@ -30,7 +30,7 @@ $logClient = new SoapClient(WSDL_LOGIN_URL);
 $DST="Dlk8pcIwqrfcaX4mdVMrJoD8R03ouP9ZAIuTg7vdCxkHa08IDkutEMyqkLv4MLAIgrlhti8wb72BURsla2vaUlpZVFR68146";
 $res = $logClient->__soapCall('login', Array(CODICE_ENTE,SERVICE_USER,SERVICE_PASSWD));
 print_r($res);
-die()
+die();
 $client = new WSSoapClient(WSDL_PROTEXT_URL, Array("login" => SERVICE_USER, "password"=>SERVICE_PASSWD,"trace" => true));
 $res = $client->__soapCall('getClassifiche', Array("user"=>SERVICE_USER,"DST"=>$DST,"xml"=>$xml));
 var_dump($res); 
