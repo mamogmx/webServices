@@ -9,7 +9,7 @@
 
 define('WSDL_LOGIN_URL',"http://documentale.comune.savona.it/JProtocolloDocArea/services/DOCAREAProtoSoap?WSDL");
 define('WSDL_ATTI_URL',"http://documentale.comune.savona.it/Atti/services/atti?wsdl");
-define('WSDL_PROTEXT_URL',"http://documentale.comune.savona.it/JProtocolloDocArea/services/ProtocolloExtendedServicePort?wsdl");
+define('WSDL_PROTEXT_URL',"http://documentale.comune.savona.it/agspr/services/ProtocolloExtendedServicePort?wsdl");
 define('WSDL_PROT_URL',"http://documentale.comune.savona.it/Protocollo/services/protocollo?wsdl");
 
 
